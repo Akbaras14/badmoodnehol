@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nehol</title>
+  <link rel="icon" href="https://github.com/Panbap/anh/blob/main/icon1.png?raw=true" type="image/png">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="./assets/ending.css" />
+</head>
+<body>
+  <div class="iphone-14">
+    <div class="operator-name">Nehol</div>
+    <div class="dynamic-island"></div>
+    <div class="operator-icons">
+      <i class="bi bi-reception-4"></i> 5G
+      <div class="battery">100</div>
+    </div>
+
+    <button class="back-btn" onclick="goBack()">
+      <i class="bi bi-arrow-left"></i> Kembali
+    </button>
+
+    <div class="gallery-title">Gallery</div>
+
+    <div class="gallery">
+        <video src="./assets/nehol/vidio.mp4" 
+         autoplay 
+         loop 
+         playsinline>
+  </video>
+      <img src="./assets/nehol/1.jpg" alt="Photo 2">
+      <img src="./assets/nehol/2.jpg" alt="Photo 3">
+      <img src="./assets/nehol/3.jpg" alt="Photo 4">
+      <img src="./assets/nehol/4.jpg" alt="Photo 5">
+      <img src="./assets/nehol/5.jpg" alt="Photo 6">
+      <img src="./assets/nehol/6.jpg" alt="Photo 7">
+      <img src="./assets/nehol/7.jpg" alt="Photo 8">
+      <img src="./assets/nehol/8.jpg" alt="Photo 9">
+      <img src="./assets/nehol/9.jpg" alt="Photo 10">
+      <img src="./assets/nehol/10.jpg" alt="Photo 11">
+      <img src="./assets/nehol/11.jpg" alt="Photo 12">
+      <img src="./assets/nehol/12.jpg" alt="Photo 13">
+      <img src="./assets/nehol/13.jpg" alt="Photo 14">
+      <img src="./assets/nehol/21.jpg" alt="Photo 15">
+      <img src="./assets/nehol/15.jpg" alt="Photo 16">
+      <img src="./assets/nehol/16.jpg" alt="Photo 17">
+      <img src="./assets/nehol/17.jpg" alt="Photo 18">
+      <img src="./assets/nehol/18.jpg" alt="Photo 19">
+      <img src="./assets/nehol/19.jpg" alt="Photo 20">
+      <img src="./assets/nehol/20.jpg" alt="Photo 21">
+    </div>
+  </div>
+
+  <div class="fullscreen-viewer" id="fullscreenViewer">
+    <span class="close-btn" id="closeBtn">&times;</span>
+    <img id="fullscreenImage" src="" alt="Fullscreen Photo">
+  </div>
+
+  <script>
+    const images = document.querySelectorAll('.gallery img');
+    const fullscreenViewer = document.getElementById('fullscreenViewer');
+    const fullscreenImage = document.getElementById('fullscreenImage');
+    const closeBtn = document.getElementById('closeBtn');
+
+    images.forEach(img => {
+      img.addEventListener('click', () => {
+        fullscreenImage.src = img.src;
+        fullscreenViewer.classList.add('active');
+      });
+    });
+
+    closeBtn.addEventListener('click', () => {
+      fullscreenViewer.classList.remove('active');
+    });
+
+    fullscreenViewer.addEventListener('click', (e) => {
+      if (e.target === fullscreenViewer) {
+        fullscreenViewer.classList.remove('active');
+      }
+    });
+
+    function goBack() {
+      // Bisa diarahkan ke halaman lain:
+       window.location.href = 'kata.html';
+    }
+  </script>
+</body>
+</html>

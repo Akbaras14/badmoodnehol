@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<!-- Subway Mini Runner inside your iPhone 14 Pro Max mockup -->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nehol</title>
+     <link rel="icon" href="https://github.com/Panbap/anh/blob/main/icon1.png?raw=true" type="image/png">
+
+
+    <!-- Fonts & Icons (same as your snippet) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Monoton&family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css"/>
+
+    <style>
+      :root{
+        --phone-w: 300px;  /* iPhone 14 Pro Max logical width */
+        --phone-h: 600px;  /* iPhone 14 Pro Max logical height */
+      }
+      *{ box-sizing:border-box; }
+      html,body{ height:100%; }
+      body{
+        margin:0; display:grid; place-items:center; background:#f3f2f2; color:#fff; font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      }
+
+      /* iPhone shell */
+   .iphone{
+    border: 4px solid #3b444b;
+    border-radius: 50px;
+  }
+  
+ .iphone-14{
+    width: 300px;
+    height: 600px;
+    border: 5px solid black;
+    background: rgb(24, 24, 29);
+     background-image: url("img-bg.jpg");
+    background-repeat: no-repeat;
+    background-size: 301px 600px;
+    border-radius: 47px;
+    position: relative;
+  }
+   .operator-name{
+    position: absolute;
+    top: 16px;
+    left: 30px;
+    font-size: 14px;
+    color: rgb(255, 255, 255);
+  }
+   .operator-icons{
+    position: absolute;
+    top: 16px;
+    right: 40px;
+    font-size: 14px;
+    transition: all .2s;
+    color: rgb(255, 255, 255);
+  }
+      .operator-icons .battery{
+    width: 25px;
+    height: 15px;
+    border: 2px solid #0f0f0f;
+    border-radius: 4px;
+    font-size: 10px;
+    text-align: center;
+    color: #000;
+    background: #Fefefe;
+    font-weight: bold;
+    position: absolute;
+    top: 0px;
+    right: -28px;
+  }
+  .dynamic-island{
+    width: 100px;
+    height: 25px;
+    background: black;
+    border-radius: 50px;
+    margin: 0 auto;
+    margin-top: 10px;
+    position: absolute;
+    left: 100px;
+    z-index: 99999;
+    transition: all .5s;
+  }
+  .dynamic-island-camera{
+    color: white;
+    position: absolute;
+    top: 18px;
+    right: 110px;
+    background: #121212;
+    box-shadow: 0 0 1px grey;
+    width: 10px;
+    height: 10px;
+    border-radius: 50px;
+    z-index: 99999;
+    transition: all .5s;
+  }
+      .line{ position:absolute; top:44px; left:0; right:0; height:1px; background:linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.096), transparent); }
+
+      /* Game canvas & HUD */
+      .stage{ position:absolute; inset:50px 0 0 0; display:grid; place-items:stretch; }
+      canvas#game{ width:100%; height:76%; display:block; background:linear-gradient(#0e1630, #081019 65%);
+        /* faint rails */
+        background-image: repeating-linear-gradient(
+          to right,
+          transparent 0 128px,
+          rgba(255,255,255,.03) 128px 130px
+        );
+        background-blend-mode: screen;
+      }
+
+      .hud{ position:absolute; top:10px; left:0; right:0; padding:10px 14px; display:flex; justify-content:space-between; pointer-events:none; }
+      .score{ font-weight:800; font-size:17px; text-shadow:0 2px 0 rgba(0,0,0,.4); letter-spacing:.5px; }
+      .coins{ font-weight:700; }
+      .coins i{ margin-right:6px; }
+
+      .brand{ position:absolute; bottom:20px; left:50%; transform:translateX(-50%); font-family:Monoton, cursive;  font-size:12px; color:#a0b7ff; text-shadow:0 2px 10px rgba(64,122,255,.6); }
+
+      /* Buttons */
+      .controls{ position:absolute; bottom:50px; left:0; right:0; display:flex; justify-content:center; gap:10px; pointer-events:auto; }
+      .btn{
+        border:none; padding:10px 14px; border-radius:14px; background:#151a24; color:#cfe1ff; box-shadow:inset 0 0 0 1px rgba(255,255,255,.06), 0 6px 18px rgba(0,0,0,.35);
+        font-weight:700; cursor:pointer; transition:transform .06s;
+      }
+      .btn:active{ transform:translateY(2px); }
+
+      .center-banner{ position:absolute; top:40%; left:50%; transform:translate(-50%,-50%); text-align:center; }
+      .title{ font-family:Monoton, cursive; font-size:24px; letter-spacing:3px; color:#b9ccff; text-shadow:0 6px 22px rgba(111,155,255,.7);  }
+      .title2{ font-family:Monoton, cursive; font-size:20px; letter-spacing:3px; color:#b9ccff; text-shadow:0 6px 22px rgba(111,155,255,.7); margin-bottom:8px; }
+      .subtitle{ opacity:.8; margin-bottom:16px; }
+
+      .card{ background:rgba(10,12,18,.8); border-radius:20px; padding:18px; box-shadow:inset 0 0 0 1px rgba(255,255,255,.06), 0 12px 30px rgba(0,0,0,.45); }
+      .small{ font-size:10px; opacity:.8; }
+
+      /* Bell notification demo */
+      .bell-animation-area, .bell-animation{ position:absolute; top:50px; left:14px; font-size:12px; opacity:.75; }
+      .ntf-1, .ntf-2{ display:none; gap:6px; align-items:center; }
+      .ntf-1.show, .ntf-2.show{ display:inline-flex; }
+
+      /* Game over overlay */
+      .overlay{ position:absolute; inset:0;width:100%; height:90%; display:none; place-items:center; background:linear-gradient(rgba(1,5,15,.25), rgba(1,5,15,.65)); }
+      .overlay.show{ display:grid; }
+
+      /* Helper chips */
+      .chip{ display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.08); font-size:12px; }
+      .chip i{ opacity:.9; }
+
+      /* Prevent select */
+      .iphone-14, canvas, button{ -webkit-user-select:none; user-select:none; }
+    </style>
+  </head>
+  <body>
+    <div class="iphone">
+      <div class="iphone-14">
+        <div class="operator-name">Neholl</div>
+        <div class="dynamic-island"></div>
+        <div class="dynamic-island-camera"></div>
+        <div class="operator-icons">
+          <i class="bi bi-reception-4"></i>
+          5G+
+          <div class="battery">100</div>
+        </div>
+        <div class="line"></div>
+
+        <!-- GAME STAGE -->
+        <div class="stage">
+          <canvas id="game" width="390" height="784" aria-label="Subway Mini Runner"></canvas>
+
+          <div class="hud">
+            <div class="score" id="score">0</div>
+            <div class="coins" id="coins"><i class="bi bi-coin"></i>0</div>
+          </div>
+
+          <div class="center-banner" id="startBanner">
+            <div class="title">GAME</div>
+            <div class="title2">PENGHILANG BADMOOD</div>
+            <div class="subtitle">Geser ◀ ▶ untuk pindah jalur, ⬆ untuk lompat.</div>
+            <div class="card" style="margin-bottom:12px;">
+              <div class="small"><b>Keyboard:</b> ← → pindah jalur, ↑ lompat, Spasi mulai/pause.</div>
+              <div class="small"><b>Touch:</b> Swipe kiri/kanan/loncat (atas).</div>
+            </div>
+            <button class="btn" id="playBtn"><i class="bi bi-controller"></i> Mulai</button>
+          </div>
+
+          <div class="overlay" id="gameOver">
+            <div class="card" style="text-align:center; min-width:70%;">
+              <div class="title" style="font-size:28px; margin-bottom:0">GAME OVER</div>
+              <div class="subtitle" id="finalScore">Skor: 0 • Koin: 0</div>
+              <div style="display:flex; gap:10px; justify-content:center; margin-top:6px;">
+                <button class="btn" id="restartBtn"><i class="bi bi-arrow-counterclockwise"></i> Main lagi</button>
+                <a href="ending.html" class="btn">Keluar</a>
+              </div>
+              <div style="margin-top:10px;" class="small">
+                Tips: Aku tau kamu kesel banget gara-gara kalah game, dan itu wajar… siapa sih yang nggak kesal kalau udah usaha maksimal tapi hasilnya belum sesuai? Tapi kamu jangan lupa, kamu itu jauh lebih dari sekadar game. Di mata aku, kamu itu pemenang setiap hari. soalnya kamu selalu berhasil nyuri perhatian aku tanpa usaha. game bisa kalah, tapi senyum kamu tuh… jangan sampai ilang, karena itu power-up terkuat yang aku punya buat semangat juga. Jadi sekarang istirahat dulu ya, biar bad mood-nya reda. Nanti kita main bareng, kamu yang main, aku yang jagain mood kamu.!
+              </div>
+            </div>
+          </div>
+
+          <div class="controls">
+            <button class="btn" id="leftBtn"><i class="bi bi-caret-left-fill"></i></button>
+            <button class="btn" id="jumpBtn"><i class="bi bi-arrow-up-square-fill"></i></button>
+            <button class="btn" id="rightBtn"><i class="bi bi-caret-right-fill"></i></button>
+          </div>
+
+          <div class="brand">BENGKEL CODING</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // --- Basic 3-lane runner on Canvas ---
+      const cvs = document.getElementById('game');
+      const ctx = cvs.getContext('2d');
+
+      // world config
+      const LANES = [90, 195, 300]; // x centers for 3 lanes (tuned to 390px width)
+      const GROUND_Y = cvs.height - 50; // ground y baseline
+      const PLAYER_W = 34, PLAYER_H = 46;
+
+      const state = {
+        running: false,
+        paused: false,
+        speed: 4.2, // pixels/frame
+        maxSpeed: 14,
+        accel: 0.0009, // per frame
+        distance: 0,
+        score: 0,
+        coins: 0,
+        time: 0,
+        lastSpawn: 0,
+        lastCoinSpawn: 0,
+        laneIndex: 1,
+        objects: [], // obstacles
+        coinsArr: [],
+        player: { x: LANES[1]-PLAYER_W/2, y: GROUND_Y-PLAYER_H, vy: 0, onGround: true, lane: 1 },
+      };
+
+      // helpers
+      function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+      function rectsCollide(a,b){ return (a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y); }
+
+      function reset(){
+        state.running = false; state.paused = false; state.speed = 4.2; state.distance=0; state.score=0; state.coins=0; state.time=0; state.lastSpawn=0; state.lastCoinSpawn=0;
+        state.laneIndex=1; state.objects.length=0; state.coinsArr.length=0;
+        state.player = { x: LANES[1]-PLAYER_W/2, y: GROUND_Y-PLAYER_H, vy: 0, onGround: true, lane: 1 };
+        drawIntro();
+        updateHUD();
+      }
+
+      function updateHUD(){
+        document.getElementById('score').textContent = Math.floor(state.score);
+        document.getElementById('coins').innerHTML = '<i class="bi bi-coin"></i>' + state.coins;
+      }
+
+      function spawnObstacle(){
+        const lane = Math.floor(Math.random()*3);
+        const x = LANES[lane] - 22; // obstacle centered on lane
+        const h = 36 + Math.random()*28; // varying height
+        state.objects.push({ x: x, y: -h, w: 44, h: h, type: 'barrier', lane });
+      }
+      function spawnCoinRow(){
+        const lane = Math.floor(Math.random()*3);
+        const n = 3 + Math.floor(Math.random()*3);
+        for(let i=0;i<n;i++){
+          state.coinsArr.push({ x: LANES[lane]-10, y: -i*46-30, w: 20, h:20, lane, type:'coin' });
+        }
+      }
+
+      // drawing helpers
+      function drawBackground(){
+        // simple moving floor & perspective rails
+        // (Already styled via CSS background; we add moving dashes)
+        const dashH = 28;
+        const gap = 38;
+        const offset = (state.distance % (dashH+gap));
+        ctx.save();
+        ctx.globalAlpha = .35;
+        for(let laneX of LANES){
+          ctx.fillStyle = '#cfe1ff';
+          for(let y=-dashH; y<cvs.height; y+=dashH+gap){
+            ctx.fillRect(laneX-4, y+offset, 8, dashH);
+          }
+        }
+        ctx.restore();
+      }
+
+      function drawPlayer(){
+        const p = state.player;
+        // body
+        ctx.save();
+        ctx.shadowBlur = 16; ctx.shadowColor = 'rgba(100,160,255,.8)';
+        ctx.fillStyle = '#7fb2ff';
+        roundRect(ctx, p.x, p.y, PLAYER_W, PLAYER_H, 8, true, false);
+        // head
+        ctx.fillStyle = '#e8f0ff';
+        roundRect(ctx, p.x + 6, p.y - 14, PLAYER_W-12, 18, 8, true, false);
+        // glow
+        ctx.beginPath(); ctx.arc(p.x+PLAYER_W/2, p.y+PLAYER_H, 16, 0, Math.PI*2); ctx.fillStyle='rgba(120,170,255,.25)'; ctx.fill();
+        ctx.restore();
+      }
+
+      function drawObjects(){
+        // obstacles
+        ctx.fillStyle = '#ff6b6b';
+        state.objects.forEach(o=>{ roundRect(ctx, o.x, o.y, o.w, o.h, 6, true, false); });
+        // coins
+        ctx.fillStyle = '#ffd54a';
+        state.coinsArr.forEach(c=>{ ctx.beginPath(); ctx.arc(c.x+c.w/2, c.y+c.h/2, c.w/2, 0, Math.PI*2); ctx.fill(); ctx.fillStyle='rgba(255,255,255,.45)'; ctx.beginPath(); ctx.arc(c.x+c.w/2-3, c.y+c.h/2-3, c.w/4, 0, Math.PI*2); ctx.fill(); ctx.fillStyle='#ffd54a'; });
+      }
+
+      function roundRect(ctx, x, y, w, h, r, fill, stroke){
+        if (w<2*r) r=w/2; if(h<2*r) r=h/2;
+        ctx.beginPath();
+        ctx.moveTo(x+r, y);
+        ctx.arcTo(x+w, y, x+w, y+h, r);
+        ctx.arcTo(x+w, y+h, x, y+h, r);
+        ctx.arcTo(x, y+h, x, y, r);
+        ctx.arcTo(x, y, x+w, y, r);
+        ctx.closePath();
+        if(fill) ctx.fill(); if(stroke) ctx.stroke();
+      }
+
+      // input
+      function moveLane(dir){
+        state.laneIndex = clamp(state.laneIndex + dir, 0, 2);
+        state.player.lane = state.laneIndex;
+        // tween x quickly
+        const targetX = LANES[state.laneIndex]-PLAYER_W/2;
+        // snap instantly (simple), or tween:
+        state.player.x = targetX;
+      }
+      function jump(){
+        if(state.player.onGround){
+          state.player.vy = -10.8; // jump impulse
+          state.player.onGround = false;
+        }
+      }
+
+      // swipe handling
+      (function setupTouch(){
+        let startX=0, startY=0, active=false;
+        cvs.addEventListener('touchstart', e=>{ active=true; const t=e.changedTouches[0]; startX=t.clientX; startY=t.clientY; }, {passive:true});
+        cvs.addEventListener('touchend', e=>{
+          if(!active) return; active=false; const t=e.changedTouches[0];
+          const dx=t.clientX-startX, dy=t.clientY-startY;
+          if(Math.abs(dx)>Math.abs(dy)){
+            if(dx>24) moveLane(+1); else if(dx<-24) moveLane(-1);
+          } else {
+            if(dy<-24) jump();
+          }
+        }, {passive:true});
+      })();
+
+      // buttons
+      document.getElementById('leftBtn').addEventListener('click', ()=>moveLane(-1));
+      document.getElementById('rightBtn').addEventListener('click', ()=>moveLane(+1));
+      document.getElementById('jumpBtn').addEventListener('click', ()=>jump());
+
+      // kb
+      window.addEventListener('keydown', (e)=>{
+        if(e.code==='ArrowLeft' || e.code==='KeyA') moveLane(-1);
+        else if(e.code==='ArrowRight' || e.code==='KeyD') moveLane(+1);
+        else if(e.code==='ArrowUp' || e.code==='Space' || e.code==='KeyW') jump();
+        else if(e.code==='KeyP') togglePause();
+      });
+
+      // game loop
+      let rafId = null;
+      function loop(){
+        if(!state.running || state.paused){ rafId = requestAnimationFrame(loop); return; }
+        // physics
+        state.time++;
+        state.speed = Math.min(state.maxSpeed, state.speed + state.accel);
+        state.distance += state.speed;
+        state.score += 0.05 * state.speed;
+
+        // spawn obstacles periodically
+        if(state.time - state.lastSpawn > 50 + Math.max(0, 110 - state.speed*10)){
+          spawnObstacle();
+          state.lastSpawn = state.time;
+        }
+        // spawn coin rows
+        if(state.time - state.lastCoinSpawn > 160){
+          spawnCoinRow();
+          state.lastCoinSpawn = state.time;
+        }
+
+        // move all objects downwards (player runs forward)
+        for(let o of state.objects){ o.y += state.speed; }
+        for(let c of state.coinsArr){ c.y += state.speed; }
+
+        // gravity
+        state.player.vy += 0.58; // gravity
+        state.player.y += state.player.vy;
+        if(state.player.y >= GROUND_Y-PLAYER_H){ state.player.y = GROUND_Y-PLAYER_H; state.player.vy=0; state.player.onGround=true; }
+
+        // collisions
+        const pBB = { x: state.player.x, y: state.player.y, w: PLAYER_W, h: PLAYER_H };
+        for(let o of state.objects){
+          if(rectsCollide(pBB, o)) { endGame(); return; }
+        }
+        // coin pickup
+        for(let i=state.coinsArr.length-1;i>=0;i--){
+          const c = state.coinsArr[i];
+          if(rectsCollide(pBB, c)) { state.coins++; state.score += 5; state.coinsArr.splice(i,1); continue; }
+          if(c.y > cvs.height+60) state.coinsArr.splice(i,1);
+        }
+        // cleanup obstacles
+        for(let i=state.objects.length-1;i>=0;i--){ if(state.objects[i].y>cvs.height+40) state.objects.splice(i,1); }
+
+        // draw
+        ctx.clearRect(0,0,cvs.width,cvs.height);
+        drawBackground();
+        drawObjects();
+        drawPlayer();
+        updateHUD();
+
+        rafId = requestAnimationFrame(loop);
+      }
+
+      function start(){
+        document.getElementById('startBanner').style.display = 'none';
+        document.getElementById('gameOver').classList.remove('show');
+        state.running = true; state.paused = false; loop();
+      }
+      function endGame(){
+        state.running = false; cancelAnimationFrame(rafId);
+        document.getElementById('finalScore').textContent = `Skor: ${Math.floor(state.score)} • Koin: ${state.coins}`;
+        document.getElementById('gameOver').classList.add('show');
+      }
+      function togglePause(){
+        if(!state.running) return;
+        state.paused = !state.paused;
+        if(!state.paused) loop();
+      }
+
+      // UI buttons
+      document.getElementById('playBtn').addEventListener('click', ()=>{ reset(); start(); });
+      document.getElementById('restartBtn').addEventListener('click', ()=>{ reset(); start(); });
+      document.getElementById('pauseBtn').addEventListener('click', ()=>{ togglePause(); });
+
+      // Intro art frame
+      function drawIntro(){
+        ctx.clearRect(0,0,cvs.width,cvs.height);
+        const g = ctx.createLinearGradient(0,0,0,cvs.height);
+        g.addColorStop(0,'#0e1630'); g.addColorStop(1,'#081019');
+        ctx.fillStyle = g; ctx.fillRect(0,0,cvs.width,cvs.height);
+        // rails
+        ctx.globalAlpha=.2; ctx.fillStyle='#cfe1ff';
+        for(let laneX of LANES){ for(let y=0;y<cvs.height;y+=64){ ctx.fillRect(laneX-3, y, 6, 28); } }
+        ctx.globalAlpha=1;
+        // idle player
+        const pX = LANES[1]-PLAYER_W/2; const pY = GROUND_Y-PLAYER_H;
+        roundRect(ctx,pX,pY,PLAYER_W,PLAYER_H,8,true,false);
+      }
+
+      // small bell demo toggle every 6s
+      setInterval(()=>{
+        document.querySelector('.ntf-1').classList.toggle('show');
+        document.querySelector('.ntf-2').classList.toggle('show');
+      }, 6000);
+
+      // boot
+      reset();
+    </script>
+  </body>
+</html>

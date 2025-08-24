@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Website Lovely - Galaxy Love 2.0">
+  <title>Nehol</title>
+  <link rel="icon" href="https://github.com/Panbap/anh/blob/main/icon1.png?raw=true" type="image/png">
+
+  <!-- Font & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+body {
+  margin: 0;
+ background: none;
+  overflow: hidden;
+}
+
+    #container { width: 100%; height: 100vh; position: relative; }
+    #toggle-audio {
+      width: 50px; height: 50px; border-radius: 50%; border: none;
+      background: rgba(44, 44, 44, 0.1); backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.3s ease;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+      position: absolute; top: 15px; right: 15px; z-index: 999;
+    }
+    #toggle-audio:hover { background: rgba(255, 255, 255, 0.2); transform: scale(1.1); }
+    #audio-icon { font-size: 1.2rem; color: #fff; }
+
+    #landscape-warning {
+      position: absolute; inset: 0; background: rgba(0, 0, 0, 0.9);
+      display: none; align-items: center; justify-content: center;
+      z-index: 1000; text-align: center; color: #fff;
+    }
+    #landscape-warning.active { display: flex; }
+    .warning-content h1 { font-size: 2rem; letter-spacing: 3px; color: #ff285a; text-shadow: 0 0 10px rgba(255, 133, 162, 0.8); margin-bottom: 5px; }
+    .warning-content p { font-size: 0.9rem; margin-top: 10px; opacity: 0.8; }
+    .rotate-icon {
+      width: 60px; height: 60px; margin: 20px auto;
+      border: 3px solid #fff; border-radius: 50%; border-top: 3px solid transparent;
+      animation: spin 2s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #hearts-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0; /* di bawah tombol & overlay */
+    }
+    .heart {
+      position: absolute;
+      bottom: -10px;
+      will-change: transform, opacity, filter;
+      color: #ff6aa6;
+      text-shadow: 0 0 6px rgba(255, 106, 166, 0.9), 0 0 14px rgba(255, 106, 166, 0.5);
+      filter: drop-shadow(0 0 4px rgba(255, 106, 166, 0.7));
+      opacity: 0;
+      animation: floatUp var(--dur, 4s) linear forwards;
+    }
+    @keyframes floatUp {
+      0% {
+        transform: translate(0, 0) scale(var(--scale, 1)) rotate(0deg);
+        opacity: 0;
+      }
+      10% { opacity: 0.9; }
+      100% {
+        transform: translate(var(--drift, 30px), calc(-1 * var(--height, 240px)))
+          scale(var(--scale, 1))
+          rotate(var(--rot, 30deg));
+        opacity: 0;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.152.2/build/three.module.js",
+        "three/addons/controls/OrbitControls.js": "https://unpkg.com/three@0.152.2/examples/jsm/controls/OrbitControls.js",
+        "three/examples/jsm/postprocessing/EffectComposer.js": "https://unpkg.com/three@0.152.2/examples/jsm/postprocessing/EffectComposer.js",
+        "three/examples/jsm/postprocessing/RenderPass.js": "https://unpkg.com/three@0.152.2/examples/jsm/postprocessing/RenderPass.js",
+        "three/examples/jsm/postprocessing/UnrealBloomPass.js": "https://unpkg.com/three@0.152.2/examples/jsm/postprocessing/UnrealBloomPass.js"
+      }
+    }
+  </script>
+</head>
+
+<body>
+
+    <div id="container">
+      <button id="toggle-audio">
+        <i id="audio-icon" class="fa-solid fa-volume-xmark"></i>
+      </button>
+  
+      <div id="landscape-warning">
+        <div class="warning-content">
+          <div class="rotate-icon"></div>
+          <h1>Love</h1>
+          <h1>Galaxy</h1>
+        </div>
+      </div>
+  
+      <div id="hearts-layer"></div>
+    </div>
+
+
+
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
+
+const container = document.getElementById("container");
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+camera.position.z = 60;
+
+// Renderer tanpa setClearColor
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
+container.appendChild(renderer.domElement);
+
+// Background gambar 2D
+const loader = new THREE.TextureLoader();
+loader.load('./assets/background.jpg', function (texture) {
+  texture.colorSpace = THREE.SRGBColorSpace; // biar warnanya akurat
+  scene.background = texture;
+});
+
+
+
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.3));
+const pointLight = new THREE.PointLight(0xffffff, 0.9);
+pointLight.position.set(10, 20, 30);
+scene.add(pointLight);
+
+// === Moon Texture Fixed ===
+const moonTexture = new THREE.TextureLoader().load(
+  "https://threejs.org/examples/textures/planets/moon_1024.jpg",
+  () => console.log("Moon texture loaded successfully!"),
+  undefined,
+  (err) => console.error("Failed to load moon texture", err)
+);
+
+const moon = new THREE.Mesh(
+  new THREE.SphereGeometry(6, 67, 67),
+  new THREE.MeshStandardMaterial({
+    map: moonTexture,
+    bumpMap: moonTexture, // pakai tekstur sama biar tetap ada efek relief
+    bumpScale: 0.3
+  })
+);
+moon.position.set(0, 0, 0);
+scene.add(moon);
+
+// Stars
+// Stars
+function createStarTexture() {
+  const size = 64;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+
+  // Clear background transparan
+  ctx.clearRect(0, 0, size, size);
+
+  // Gambar bentuk bintang (lingkaran bercahaya dengan spike)
+  const center = size / 2;
+  const gradient = ctx.createRadialGradient(center, center, 0, center, center, size / 2);
+  gradient.addColorStop(0, 'rgba(255,255,255,1)');
+  gradient.addColorStop(0.3, 'rgba(255,200,255,0.8)');
+  gradient.addColorStop(0.6, 'rgba(255,150,255,0.3)');
+  gradient.addColorStop(1, 'rgba(255,150,255,0)');
+
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.arc(center, center, size / 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  return new THREE.CanvasTexture(canvas);
+}
+
+function createVFXGalaxyRandom() {
+  const starCount = 5000;
+  const geometry = new THREE.BufferGeometry();
+  const positions = new Float32Array(starCount * 3);
+  const velocities = new Float32Array(starCount);
+
+  for (let i = 0; i < starCount; i++) {
+    positions[i * 3] = (Math.random() - 0.5) * 150;
+    positions[i * 3 + 1] = (Math.random() - 0.5) * 80;
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 150;
+    velocities[i] = 0.01 + Math.random() * 0.02;
+  }
+
+  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  const colors = new Float32Array(starCount * 3);
+  for (let i = 0; i < starCount; i++) {
+    colors[i * 3] = 1;
+    colors[i * 3 + 1] = 0.3;
+    colors[i * 3 + 2] = 1;
+  }
+  geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+
+  const starTexture = createStarTexture();
+  const material = new THREE.PointsMaterial({
+    size: 0.5, // lebih besar dari sebelumnya biar teksturnya kelihatan
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.9,
+    map: starTexture,
+    alphaTest: 0.01
+  });
+
+  const points = new THREE.Points(geometry, material);
+  points.userData = { velocities, starCount };
+  return points;
+}
+
+const vfxGalaxy = createVFXGalaxyRandom();
+scene.add(vfxGalaxy);
+
+// === Tambahan: Bintang Jatuh ===
+function createShootingStar() {
+  // Kepala bintang jatuh
+  const geometry = new THREE.SphereGeometry(0.0, 8, 8);
+  const material = new THREE.MeshBasicMaterial({ color: 0x000000 });
+  const star = new THREE.Mesh(geometry, material);
+
+  // Posisi awal bintang
+  star.position.set(
+    (Math.random() - 0.5) * 100,
+    Math.random() * 40 + 20,
+    (Math.random() - 0.5) * 100
+  );
+
+  // === Buat tekstur gradasi untuk ekor ===
+  function createTrailTexture() {
+    const size = 128;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+
+    const gradient = ctx.createLinearGradient(0, 0, 0, size);
+    gradient.addColorStop(0, 'rgba(255,200,255,0.8)'); // dekat kepala terang
+    gradient.addColorStop(0.5, 'rgba(255,255,255,0.3)');
+    gradient.addColorStop(1, 'rgba(255,255,255,0)');   // ujung memudar
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, size, size);
+
+    return new THREE.CanvasTexture(canvas);
+  }
+
+  const trailTexture = createTrailTexture();
+
+  // === Ekor bintang jatuh (mengikuti arah) ===
+  const trailLength = 10;
+  const trailGeometry = new THREE.PlaneGeometry(0.5, trailLength);
+  const trailMaterial = new THREE.MeshBasicMaterial({
+    map: trailTexture,
+    transparent: true,
+    opacity: 0.8,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    side: THREE.DoubleSide
+  });
+  const trail = new THREE.Mesh(trailGeometry, trailMaterial);
+
+  // Posisikan ekor di belakang pusat bintang
+  trail.position.set(0, -trailLength / 2, 0);
+
+  // Jadikan ekor anak dari bintang
+  star.add(trail);
+
+  // Data kecepatan dan durasi
+  const velocity = new THREE.Vector3(
+    -Math.random() * 2 - 1,
+    -Math.random() * 1 - 0.5,
+    Math.random() * 2 - 1
+  );
+  star.userData = {
+    velocity,
+    life: 100,
+    trail
+  };
+
+  // Atur rotasi ekor mengikuti arah kecepatan
+  const dir = velocity.clone().normalize();
+  const quat = new THREE.Quaternion().setFromUnitVectors(
+    new THREE.Vector3(0, -1, 0), // arah default ekor
+    dir.negate()                 // arah berlawanan dengan kecepatan
+  );
+  trail.setRotationFromQuaternion(quat);
+
+  scene.add(star);
+  return star;
+}
+
+
+
+const shootingStars = [];
+
+// Spawn bintang jatuh setiap beberapa detik
+setInterval(() => {
+  if (shootingStars.length < 5) {
+    shootingStars.push(createShootingStar());
+  }
+}, 300);
+
+// Update bintang jatuh di render loop
+function updateShootingStars() {
+  for (let i = shootingStars.length - 1; i >= 0; i--) {
+    const star = shootingStars[i];
+    star.position.add(star.userData.velocity);
+    star.userData.life--;
+
+    if (star.userData.life <= 0) {
+      scene.remove(star);
+      shootingStars.splice(i, 1);
+    }
+  }
+}
+
+
+// Letters orbit
+const words=["ARAHAS","UYAIDNIL","AHEN"];
+let allChars=[]; const extraGap=2;
+allChars.push(...Array(extraGap).fill(" "));
+words.forEach((word,index)=>{
+  allChars.push(...word.split(""));
+  if(index<words.length-1) allChars.push(...Array(extraGap).fill(" "));
+});
+allChars.push(...Array(extraGap).fill(" "));
+
+const orbitRadius=6.75;
+const letterSpacing=(2*Math.PI)/allChars.length;
+const letterSprites=[];
+function createLetterSprite(letter) {
+  if (letter === "") return null;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 256;
+  const ctx = canvas.getContext("2d");
+
+  // Lebih besar, lebih tebal
+  ctx.font = "Bold 212px Poppins";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  // Glow lebih kuat
+  ctx.shadowColor = "rgba(255, 100, 160, 0.8)";
+  ctx.shadowBlur = 30;
+
+  // Warna huruf lebih terang
+  ctx.fillStyle = "#ff4b7d";
+  ctx.fillText(letter, 128, 128);
+
+  // Tambah outline putih agar kontras
+  ctx.lineWidth = 8;
+  ctx.strokeStyle = "#ffffff";
+  ctx.strokeText(letter, 128, 128);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  const material = new THREE.SpriteMaterial({
+    map: texture,
+    transparent: true
+  });
+
+  const sprite = new THREE.Sprite(material);
+  sprite.scale.set(2.5, 2.5, 1); // sedikit lebih besar
+  return sprite;
+}
+
+allChars.forEach((char,i)=>{
+  const sprite=createLetterSprite(char);
+  if(!sprite) return;
+  sprite.userData.baseAngle=i*letterSpacing;
+  scene.add(sprite);
+  letterSprites.push(sprite);
+});
+
+// 10 Image Sprites orbit
+const imageUrls = [
+  "./assets/nehol/1.jpg","./assets/nehol/2.jpg","./assets/nehol/3.jpg","./assets/nehol/4.jpg","./assets/nehol/5.jpg",
+  "./assets/nehol/6.jpg","./assets/nehol/7.jpg","./assets/nehol/8.jpg","./assets/nehol/9.jpg","./assets/nehol/10.jpg","./assets/nehol/11.jpg",
+  "./assets/nehol/12.jpg","./assets/nehol/13.jpg","./assets/nehol/14.jpg","./assets/nehol/15.jpg","./assets/nehol/16.jpg","./assets/nehol/17.jpg",
+  ,"./assets/nehol/18.jpg","./assets/nehol/19.jpg","./assets/nehol/20.jpg","./assets/nehol/21.jpg","./assets/nehol/22.jpg","./assets/nehol/23.jpg","./assets/nehol/24.jpg",
+  "./assets/nehol/25.jpg","./assets/nehol/26.jpg","./assets/nehol/27.jpg"
+
+];
+const imageSprites = [];
+const maxRadius = 60; // jarak maksimal dari bulan
+
+imageUrls.forEach((url, idx) => {
+  const texture = new THREE.TextureLoader().load(url, (tex) => {
+    tex.minFilter = THREE.LinearFilter; // halus saat diperkecil
+    tex.magFilter = THREE.LinearFilter; // halus saat diperbesar
+    tex.anisotropy = 16; // perbaiki ketajaman tekstur
+  });
+
+  const material = new THREE.SpriteMaterial({
+    map: texture,
+    transparent: false,
+    opacity: 1, // maksimal
+    depthWrite: false, // hindari artefak tepi
+    alphaTest: 0.15 // menghaluskan tepi
+  });
+
+  const sprite = new THREE.Sprite(material);
+
+  // posisi awal acak di sekitar bulan
+  const radius = Math.random() * maxRadius;
+  const theta = Math.random() * 2 * Math.PI;
+  const phi = Math.random() * Math.PI;
+
+  sprite.position.set(
+    moon.position.x + radius * Math.sin(phi) * Math.cos(theta),
+    moon.position.y + radius * Math.cos(phi),
+    moon.position.z + radius * Math.sin(phi) * Math.sin(theta)
+  );
+
+  sprite.userData = {
+    speed: 0.05 + Math.random() * 0.15, // kecepatan floating
+    direction: new THREE.Vector3(
+      (Math.random() - 0.5) * 0.1,
+      (Math.random() - 0.5) * 0.1,
+      (Math.random() - 0.5) * 0.1
+    ),
+    fadePhase: Math.random() * Math.PI * 2,
+    scaleBase: 3 + Math.random() * 2
+  };
+
+  sprite.scale.set(sprite.userData.scaleBase, sprite.userData.scaleBase, 1);
+  scene.add(sprite);
+  imageSprites.push(sprite);
+});
+
+
+// Bloom
+const composer=new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene,camera));
+const bloomPass=new UnrealBloomPass(new THREE.Vector2(window.innerWidth,window.innerHeight),1.8,0.8,0.85);
+composer.addPass(bloomPass);
+
+// Animate
+let rotationAngle=0; let pulsePhase=0; const pulseSpeed=0.05; const angleOffset=40*Math.PI/180;
+function animate(){
+  requestAnimationFrame(animate);
+  moon.rotation.y+=0.003;
+  rotationAngle+=0.01; pulsePhase+=pulseSpeed;
+  
+  // Stars
+ const data = vfxGalaxy.userData;
+  const pos = vfxGalaxy.geometry.attributes.position.array;
+  for (let i = 0; i < data.starCount; i++) {
+    pos[i * 3 + 2] += data.velocities[i];
+    if (pos[i * 3 + 2] > 75) pos[i * 3 + 2] = -75;
+  }
+  vfxGalaxy.geometry.attributes.position.needsUpdate = true;
+
+
+  
+
+  // Letters orbit
+  letterSprites.forEach((sprite,idx)=>{
+    const angle=rotationAngle+sprite.userData.baseAngle+angleOffset;
+    const yOffset=Math.sin(angle*2)*2;
+    sprite.position.set(
+      moon.position.x + orbitRadius*Math.cos(angle),
+      moon.position.y + yOffset,
+      moon.position.z + orbitRadius*Math.sin(angle)
+    );
+    sprite.rotation.z=Math.sin(pulsePhase+idx*0.3)*0.5;
+    sprite.lookAt(camera.position);
+    const pulse=1+Math.sin(pulsePhase+idx*0.3)*0.2;
+    sprite.scale.set(3*pulse,3*pulse,1);
+    sprite.material.opacity=0.8+Math.sin(pulsePhase+idx*0.3)*0.2;
+  });
+
+  // Image sprites orbit
+imageSprites.forEach(sprite => {
+  // floating movement
+  sprite.position.add(sprite.userData.direction);
+
+  // tetap dalam radius dekat bulan
+  const offset = new THREE.Vector3().subVectors(sprite.position, moon.position);
+  if(offset.length() > maxRadius) {
+    offset.normalize().multiplyScalar(maxRadius);
+    sprite.position.copy(moon.position).add(offset);
+    sprite.userData.direction.multiplyScalar(-1); // pantul ke arah lain
+  }
+
+  // opacity fade in/out
+  sprite.material.opacity = 0.3 + 0.7*(0.5 + 0.5*Math.sin(rotationAngle + sprite.userData.fadePhase));
+
+  // sedikit rotasi dan scale pulse
+  sprite.rotation.z += 0.01;
+  const pulse = 1 + 0.2*Math.sin(rotationAngle + sprite.userData.fadePhase);
+  sprite.scale.set(sprite.userData.scaleBase*pulse, sprite.userData.scaleBase*pulse,1);
+
+  sprite.lookAt(camera.position);
+});
+
+  // Camera cinematic
+  const time=Date.now()*0.0003; const radius=40; const height=8+Math.sin(time*0.5)*4;
+  camera.position.x = moon.position.x + Math.sin(time)*radius;
+  camera.position.y = moon.position.y + height;
+  camera.position.z = moon.position.z + Math.cos(time*0.7)*(radius+5);
+  camera.lookAt(moon.position);
+  controls.target.copy(moon.position); controls.update();
+
+  composer.render();
+
+  // Update bintang jatuh
+  updateShootingStars();
+
+  renderer.render(scene, camera);
+
+}
+animate();
+
+window.addEventListener("resize",()=>{
+  camera.aspect=window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  composer.setSize(window.innerWidth, window.innerHeight);
+});
+
+</script>
+
+
+<script>
+const musicManager = {
+  audio: null,
+  isPlaying: false,
+  init() {
+    this.audio = new Audio("./assets/lagu/lagu1.mpeg");
+    this.audio.loop = true;
+    this.audio.volume = 0.7;
+    this.audio.preload = "auto";
+    this.audio.setAttribute("playsinline","");
+
+    this.audio.onplay = () => {
+      this.isPlaying = true;
+      this.updateUI();
+    };
+    this.audio.onpause = () => {
+      this.isPlaying = false;
+      this.updateUI();
+    };
+
+    // Autoplay saat halaman dimuat
+    this.audio.play().catch(err => {
+      console.warn("Autoplay dicegah browser:", err);
+      // Fallback ke klik
+      document.addEventListener("click", () => {
+        this.audio.play().catch(e => console.warn(e));
+      }, { once: true });
+    });
+
+    this.updateUI();
+  },
+  togglePlayback() {
+    if (!this.audio) return;
+    this.audio.paused ? this.audio.play() : this.audio.pause();
+  },
+  updateUI() {
+    const icon = document.getElementById("audio-icon");
+    if (!icon) return;
+    if (this.isPlaying) {
+      icon.classList.remove("fa-volume-xmark");
+      icon.classList.add("fa-volume-high");
+    } else {
+      icon.classList.remove("fa-volume-high");
+      icon.classList.add("fa-volume-xmark");
+    }
+  }
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+  musicManager.init();
+  document.getElementById("toggle-audio").addEventListener("click", () => {
+    musicManager.togglePlayback();
+  });
+  // SweetAlert muncul setelah 1 menit (60000 ms)
+setTimeout(() => {
+  Swal.fire({
+    title: '💖 Halo!',
+    html: `
+      <div style="display:flex; flex-direction:column; align-items:center; gap:10px;">
+        <span>Gimana badmoodnya?? apakah sudah mendingan?? hmm kayanya belom lanjutin kuyy</span>
+        <img src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExd2gyamFmMDVwaGk1M2F2dHI0N3NseHptc3ZybWlvenJiMXlleG8wdSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/MDJ9IbxxvDUQM/giphy.gif" 
+             style="width:200px; height:auto; border-radius:10px;" />
+      </div>
+    `,
+    icon: 'success',
+    confirmButtonText: 'LANJUT KAKA !!',
+    background: '#1a0a1f',
+    color: '#ff90c0',
+    showClass: {
+      popup: 'animate__animated animate__fadeInDown'
+    },
+    hideClass: {
+      popup: 'animate__animated animate__fadeOutUp'
+    }
+  }).then((result) => {
+    if (result.isConfirmed) {
+      // Redirect ke index.html
+      window.location.href = 'games.html';
+    }
+  });
+}, 60000);
+
+
+});
+</script>
+
+<script>
+const layer = document.getElementById('hearts-layer');
+  const MAX_HEARTS = 80;
+  const HEARTS_PER_SEC = 10;
+  let ticker = null;
+
+  function spawnHeart() {
+    if (!layer) return;
+    if (layer.childElementCount >= MAX_HEARTS) {
+      layer.firstChild?.remove();
+    }
+
+    const h = document.createElement('span');
+    h.className = 'heart';
+    h.textContent = '❤';
+
+    const scale = (Math.random() * 0.9) + 0.6;
+    const sizePx = 12 + Math.random() * 22;
+    const drift = (Math.random() * 160) - 80;
+    const height = 180 + Math.random() * 280;
+    const rot = (Math.random() * 120 - 60) + 'deg';
+    const dur = (3 + Math.random() * 3).toFixed(2) + 's';
+    const x = Math.random() * window.innerWidth;
+
+    h.style.left = x + 'px';
+    h.style.fontSize = sizePx + 'px';
+    h.style.setProperty('--scale', scale);
+    h.style.setProperty('--drift', drift + 'px');
+    h.style.setProperty('--height', height + 'px');
+    h.style.setProperty('--rot', rot);
+    h.style.setProperty('--dur', dur);
+
+    h.addEventListener('animationend', () => h.remove());
+    layer.appendChild(h);
+  }
+
+  function start() {
+    if (ticker) return;
+    ticker = setInterval(() => {
+      const n = 1 + (Math.random() < 0.35 ? 1 : 0) + (Math.random() < 0.15 ? 1 : 0);
+      for (let i = 0; i < n; i++) spawnHeart();
+    }, 4000 / HEARTS_PER_SEC);
+  }
+
+  function stop() {
+    if (!ticker) return;
+    clearInterval(ticker);
+    ticker = null;
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stop(); else start();
+  });
+
+  start();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+
+</body>
+</html>
